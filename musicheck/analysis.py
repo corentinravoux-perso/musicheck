@@ -264,7 +264,7 @@ def analyze(
         except av.error.FFmpegError:
             errors += 1
         codec = cc.name
-        raw_bits = int(cc.bits_per_raw_sample or 0) or None
+        raw_bits = int(getattr(cc, "bits_per_raw_sample", 0) or 0) or None
     acc.finish()
 
     freqs = np.fft.rfftfreq(acc.nfft, 1.0 / sr)

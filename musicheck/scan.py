@@ -9,6 +9,7 @@ instant and threshold changes need no rescan.
 from __future__ import annotations
 
 import json
+import multiprocessing
 import os
 import sqlite3
 from collections.abc import Callable, Iterable
@@ -181,7 +182,11 @@ def scan(
     else:
         for var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
             os.environ.setdefault(var, "1")  # one thread per worker process
-        with ProcessPoolExecutor(max_workers=jobs) as pool:
+        methods = multiprocessing.get_all_start_methods()
+        ctx = multiprocessing.get_context(
+            "forkserver" if "forkserver" in methods else "spawn"
+        )
+        with ProcessPoolExecutor(max_workers=jobs, mp_context=ctx) as pool:
             futures = {pool.submit(measure, f, max_duration): f for f in todo}
             for i, fut in enumerate(as_completed(futures)):
                 f = futures[fut]
