@@ -25,6 +25,7 @@ __all__ = [
     "measure",
     "scan",
     "default_cache_path",
+    "common_root",
 ]
 
 ANALYSIS_VERSION = 1
@@ -73,6 +74,24 @@ class Cache:
             (str(path), size, mtime, ANALYSIS_VERSION, json.dumps(measured)),
         )
 
+    def carry(self, src: Path, dst: Path, keep_src: bool = True) -> bool:
+        """Reuse the measurement of ``src`` for ``dst`` (a copy, move or link
+        of the same audio). Returns False when ``src`` has no usable entry."""
+        row = self.db.execute(
+            "SELECT version, data FROM measures WHERE path = ?", (str(src),)
+        ).fetchone()
+        if row is None or row[0] != ANALYSIS_VERSION:
+            return False
+        size, mtime = self._stamp(Path(dst))
+        self.db.execute(
+            "INSERT OR REPLACE INTO measures VALUES (?, ?, ?, ?, ?)",
+            (str(dst), size, mtime, ANALYSIS_VERSION, row[1]),
+        )
+        if not keep_src:
+            self.db.execute("DELETE FROM measures WHERE path = ?", (str(src),))
+        self.db.commit()
+        return True
+
     def commit(self) -> None:
         self.db.commit()
 
@@ -85,6 +104,19 @@ class Cache:
     def close(self) -> None:
         self.db.commit()
         self.db.close()
+
+
+def common_root(paths: Iterable[str | Path]) -> Path | None:
+    """Folder that record paths are shown relative to."""
+    resolved = [Path(p).expanduser().resolve() for p in paths]
+    if not resolved:
+        return None
+    if len(resolved) == 1:
+        return resolved[0] if resolved[0].is_dir() else resolved[0].parent
+    try:
+        return Path(os.path.commonpath(resolved))
+    except ValueError:
+        return None
 
 
 def find_audio(paths: Iterable[str | Path], recursive: bool = True) -> list[Path]:

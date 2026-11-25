@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="musicheck-token" content="__MUSICHECK_TOKEN__">
+<meta name="musicheck-desktop" content="__MUSICHECK_DESKTOP__">
+<meta name="color-scheme" content="dark">
+<title>musicheck</title>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/app.css">
+<script type="module" src="/static/app.js"></script>
+</head>
+<body>
+<header class="top">
+  <span class="wordmark" aria-label="musicheck">Musicheck</span>
+  <button type="button" class="folder" id="folder-btn" title="Open another folder (Ctrl+O)">
+    <svg class="i" aria-hidden="true"><use href="/static/icons.svg#folder"/></svg>
+    <span class="caps">Open</span>
+    <span class="folder-path" id="folder-path">No folder open</span>
+  </button>
+  <div class="strip" id="strip" role="img" aria-label="No tracks"></div>
+  <span class="grow"></span>
+  <label class="search">
+    <svg class="i" aria-hidden="true"><use href="/static/icons.svg#search"/></svg>
+    <input id="search" type="search" placeholder="Search title, artist, album, file" aria-label="Search tracks" autocomplete="off" spellcheck="false">
+    <kbd>/</kbd>
+  </label>
+  <button type="button" class="btn" id="rescan" title="Measure new and changed files again (Ctrl+R)">
+    <svg class="i" aria-hidden="true"><use href="/static/icons.svg#rescan"/></svg><span>Rescan</span>
+  </button>
+</header>
+
+<div class="scanbar" id="scanbar" hidden>
+  <span class="caps" id="scan-label">Scanning</span>
+  <span class="readout" id="scan-readout" aria-hidden="true"></span>
+  <span class="scan-count" id="scan-count"></span>
+  <span class="scan-file" id="scan-file"></span>
+</div>
+
+<main class="work" id="work">
+  <section class="pulsar" aria-labelledby="pulsar-title">
+    <div class="panel-head">
+      <h2 class="caps" id="pulsar-title">Spectra</h2>
+      <span class="caps dim" id="pulsar-scale">0 – 24 kHz</span>
+    </div>
+    <div class="pulsar-plot" id="pulsar-plot">
+      <canvas id="pulsar" aria-describedby="pulsar-help"></canvas>
+      <p class="sr-only" id="pulsar-help">Each line is one track's average spectrum, in list order. A line that drops to flat before the right edge is a track whose sound stops early.</p>
+      <div class="tip" id="pulsar-tip" hidden></div>
+      <div class="pulsar-empty" id="pulsar-empty">Spectra appear here once a folder is scanned.</div>
+    </div>
+    <div class="khz-axis" id="pulsar-axis" aria-hidden="true"></div>
+  </section>
+
+  <section class="catalog" aria-label="Tracks">
+    <div class="filters">
+      <div class="seg" id="verdict-nav" role="radiogroup" aria-label="Verdict"></div>
+      <select id="format-filter" aria-label="Format"></select>
+      <select id="real-filter" aria-label="Real quality"></select>
+      <span class="grow"></span>
+      <span class="caps dim" id="shown-count"></span>
+    </div>
+    <div class="selbar" id="selbar" hidden>
+      <span id="sel-count"></span>
+      <button type="button" class="btn small" id="sel-organize">
+        <svg class="i" aria-hidden="true"><use href="/static/icons.svg#move"/></svg><span>Move or copy…</span>
+      </button>
+      <button type="button" class="btn small ghost" id="sel-clear">Clear selection</button>
+    </div>
+    <div class="table-wrap" id="table-wrap" tabindex="0" aria-label="Track list. Arrow keys move, Space plays, X ticks.">
+      <table class="tracks" id="tracks">
+        <thead><tr id="thead-row"></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="empty" hidden></div>
+    </div>
+  </section>
+
+  <section class="detail" id="detail" aria-live="polite" aria-label="Selected track"></section>
+
+  <section class="organize" id="organize" hidden aria-labelledby="org-title">
+    <div class="org-head">
+      <h2 id="org-title">Move or copy</h2>
+      <button type="button" class="btn small ghost" id="org-close">Cancel</button>
+    </div>
+    <form class="org-form" id="org-form">
+      <label class="field wide">
+        <span class="caps">Destination folder</span>
+        <span class="row">
+          <input id="org-dest" type="text" spellcheck="false" autocomplete="off" required>
+          <button type="button" class="btn small" id="org-browse">Browse…</button>
+        </span>
+      </label>
+      <label class="field">
+        <span class="caps">Sub-folders</span>
+        <select id="org-template">
+          <option value="{verdict}/{real}">Verdict / real quality</option>
+          <option value="{verdict}">Verdict</option>
+          <option value="{format}/{verdict}">Format / verdict</option>
+          <option value="{artist}/{album}">Artist / album</option>
+          <option value=".">None: all in the destination</option>
+          <option value="custom">Custom template…</option>
+        </select>
+      </label>
+      <label class="field" id="org-custom-field" hidden>
+        <span class="caps">Template</span>
+        <input id="org-custom" type="text" value="{verdict}/{format}" spellcheck="false" autocomplete="off">
+      </label>
+      <fieldset class="field">
+        <legend class="caps">Action</legend>
+        <div class="seg" role="radiogroup" id="org-mode">
+          <label><input type="radio" name="mode" value="move" checked><span>Move</span></label>
+          <label><input type="radio" name="mode" value="copy"><span>Copy</span></label>
+          <label><input type="radio" name="mode" value="link"><span>Symlink</span></label>
+          <label><input type="radio" name="mode" value="hardlink"><span>Hard link</span></label>
+        </div>
+      </fieldset>
+      <label class="org-check"><input type="checkbox" id="org-keep"><span>Keep the album folders under each sub-folder</span></label>
+      <div class="org-actions">
+        <button type="submit" class="btn" id="org-preview">Preview the plan</button>
+        <span class="org-note" id="org-note"></span>
+      </div>
+    </form>
+    <div class="plan" id="org-plan" hidden>
+      <div class="plan-sum" id="plan-sum"></div>
+      <div class="plan-list" id="plan-list"></div>
+      <div class="org-actions">
+        <button type="button" class="btn danger" id="org-apply"><span id="org-apply-label">Move</span><i class="end" aria-hidden="true"></i></button>
+        <span class="org-note" id="org-result" role="status"></span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<audio id="audio" preload="none"></audio>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

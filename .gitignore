@@ -137,3 +137,11 @@ site/
 coverage.xml
 htmlcov/
 .ruff_cache/
+
+# Agent and design-tool files (kept in claude_config/projects/musicheck)
+CLAUDE.md
+PRODUCT.md
+DESIGN.md
+.claude/
+.impeccable/
+.superpowers/

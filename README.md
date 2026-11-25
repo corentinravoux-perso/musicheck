@@ -14,8 +14,8 @@ format, the bitrate and the encoder header promise.
 
 It sits between [whatsmybitrate](https://github.com/oren-cohen/whatsmybitrate)
 (spectral cutoff only) and [Fakin' The Funk](https://fakinthefunk.net)
-(GUI, Windows/macOS): a command-line tool, a few small pip dependencies, no
-system FFmpeg needed.
+(GUI, Windows/macOS): a command-line tool and a Linux desktop app, a few small
+pip dependencies, no system FFmpeg needed.
 
 ## What it checks
 
@@ -45,11 +45,42 @@ bitrate.
 ```bash
 git clone https://github.com/corentinravoux-perso/musicheck
 cd musicheck
-pip install -e ".[plot]"      # plot extra: matplotlib, for `info --plot`
+pip install -e ".[plot,app]"  # plot: matplotlib, for `info --plot`; app: pywebview window
 ```
 
 Dependencies: `av` (PyAV, ships its own FFmpeg), `mutagen`, `numpy`, `click`,
-`rich`. Python 3.10 or newer.
+`rich`. Python 3.10 or newer. The `app` extra adds `pywebview`; on Linux its
+window uses GTK and WebKitGTK through PyGObject (`python3-gi`,
+`gir1.2-webkit2-4.1`), so install it in an environment that sees the system
+site packages.
+
+## Desktop app
+
+```bash
+musicheck app ~/Music/new             # window on a folder (default: the last one opened)
+musicheck app --install-desktop       # add musicheck to the applications menu
+musicheck app ~/Music/new --browser   # same interface in the web browser
+```
+
+The window lists every track with its verdict, the quality it claims and the
+quality it really has. The left panel stacks the averaged spectrum of every
+listed track, one line per track in list order, so a file whose sound stops
+early shows its cliff at a glance; click a line to select its track.
+
+For the selected track: the reason for its verdict in one sentence, its
+spectrum with the detected cutoff against the cutoff a genuine file reaches,
+every measured property and tag, a player, and buttons to reveal it in the
+file manager or copy its path. Tick tracks to move, copy or link them into
+folders built from their properties (the same templates as `organize`); the
+app always shows the plan first and never overwrites a file. Moved files keep
+their cached measurements.
+
+Keys: arrows or `j`/`k` move, Space plays, `x` ticks, `m` moves or copies,
+`/` searches, Ctrl+O opens a folder, Ctrl+R rescans.
+
+The app serves its page on 127.0.0.1 only, behind a per-session token.
+Playback goes through GStreamer (WebKitGTK); a format without a GStreamer
+decoder on the system cannot be played but is still analysed.
 
 ## Usage
 
@@ -71,6 +102,7 @@ musicheck organize ~/Music -o ~/Fakes -w verdict=FAKE --move --apply --keep-tree
 
 musicheck fields                               # every field for -s / -w / -c / -b
 musicheck cache clear
+musicheck app ~/Music                          # desktop app (see below)
 ```
 
 - **`-s/--sort`** takes comma-separated fields; `-` sorts descending.

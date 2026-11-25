@@ -21,25 +21,13 @@ from .report import (
     write_csv,
     write_json,
 )
-from .scan import Cache, scan
+from .scan import Cache, common_root, scan
 
 
 def _console():
     from rich.console import Console
 
     return Console(stderr=False)
-
-
-def _common_root(paths: tuple[str, ...]) -> Path | None:
-    resolved = [Path(p).expanduser().resolve() for p in paths]
-    if len(resolved) == 1:
-        return resolved[0] if resolved[0].is_dir() else resolved[0].parent
-    try:
-        import os
-
-        return Path(os.path.commonpath(resolved))
-    except ValueError:
-        return None
 
 
 def _collect(paths, recursive, jobs, no_cache, max_duration, quiet) -> list[dict]:
@@ -52,7 +40,7 @@ def _collect(paths, recursive, jobs, no_cache, max_duration, quiet) -> list[dict
     )
 
     cache = None if no_cache else Cache()
-    root = _common_root(paths)
+    root = common_root(paths)
     try:
         if quiet:
             measured = scan(
@@ -346,6 +334,44 @@ def organize_cmd(paths, no_recursive, jobs, no_cache, max_duration, where, dest,
     for e in errors:
         console.print(f"[red]error[/] {e}")
     console.print(f"{done} file(s) done ({mode}), {len(errors)} error(s).")
+
+
+@main.command("app")
+@click.argument("paths", nargs=-1, type=click.Path(exists=True))
+@click.option("--browser", is_flag=True,
+              help="Open in the web browser instead of a window.")  # fmt: skip
+@click.option("--port", type=int, default=0, show_default="free port",
+              help="Port on 127.0.0.1.")  # fmt: skip
+@click.option("-j", "--jobs", type=int, default=None,
+              help="Parallel workers for scans (default: all cores).")  # fmt: skip
+@click.option("--no-cache", is_flag=True, help="Ignore and do not update the cache.")
+@click.option("--debug", is_flag=True, help="Enable the web inspector.")
+@click.option("--install-desktop", is_flag=True,
+              help="Add musicheck to the applications menu, then exit.")  # fmt: skip
+@click.option("--uninstall-desktop", is_flag=True,
+              help="Remove it from the applications menu, then exit.")  # fmt: skip
+def app_cmd(paths, browser, port, jobs, no_cache, debug, install_desktop,
+            uninstall_desktop):  # fmt: skip
+    """Open the desktop app on PATHS (default: the folders opened last time).
+
+    \b
+    Lists every track with its verdict; select one for its spectrum, issues,
+    measures and tags, play it, reveal it, or move files aside. Needs the
+    'app' extra (pywebview) for a window, else opens the browser.
+    """
+    if install_desktop or uninstall_desktop:
+        from .app.desktop import install_desktop as inst
+        from .app.desktop import uninstall_desktop as uninst
+
+        done = inst() if install_desktop else uninst()
+        verb = "wrote" if install_desktop else "removed"
+        for path in done:
+            click.echo(f"{verb} {path}")
+        return
+    from .app.window import run_app
+
+    run_app(paths, browser=browser, port=port, jobs=jobs, use_cache=not no_cache,
+            debug=debug)  # fmt: skip
 
 
 @main.command("fields")

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter">
+  <symbol id="folder" viewBox="0 0 20 20"><path d="M2.75 5.25h5l1.5 1.75h8v8.75H2.75z"/></symbol>
+  <symbol id="search" viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5"/><path d="M12.25 12.25l4.5 4.5"/></symbol>
+  <symbol id="rescan" viewBox="0 0 20 20"><path d="M15.5 8a6 6 0 1 0 .5 3.5"/><path d="M16 3.5V8h-4.5"/></symbol>
+  <symbol id="play" viewBox="0 0 20 20"><path d="M6 4l10 6-10 6z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="pause" viewBox="0 0 20 20"><path d="M5.5 4h3v12h-3zM11.5 4h3v12h-3z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="reveal" viewBox="0 0 20 20"><path d="M2.75 5.25h5l1.5 1.75h8v8.75H2.75z"/><path d="M8 11.5h5M11 9.5l2 2-2 2"/></symbol>
+  <symbol id="copy" viewBox="0 0 20 20"><path d="M6.75 6.75h9.5v9.5h-9.5z"/><path d="M3.75 13.25v-9.5h9.5"/></symbol>
+  <symbol id="move" viewBox="0 0 20 20"><path d="M3 10h12.5M11.5 6l4 4-4 4"/><path d="M3 4v12"/></symbol>
+  <symbol id="arrow" viewBox="0 0 20 20"><path d="M3 10h13M12 6l4 4-4 4"/></symbol>
+  <symbol id="sort" viewBox="0 0 20 20"><path d="M6 8l4-4 4 4M6 12l4 4 4-4"/></symbol>
+  <symbol id="up" viewBox="0 0 20 20"><path d="M6 12l4-4 4 4"/></symbol>
+  <symbol id="down" viewBox="0 0 20 20"><path d="M6 8l4 4 4-4"/></symbol>
+</svg>
